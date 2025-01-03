@@ -140,6 +140,7 @@ for category_name in category_names:
     data[f'{category_name}'] = column_names
 
 time.sleep(3)
+data = dict([ (k,pd.Series(v)) for k,v in data.items() ]) # solution for different size columns https://plainenglish.io/blog/a-quick-trick-to-make-dataframes-with-uneven-array-lengths-32bf80d8a61d
 df = pd.DataFrame(data)
 df.to_csv("../Datasets/scraper_01/first_two_categories.csv", index=False, header=True)
 driver.quit()
