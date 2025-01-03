@@ -27,13 +27,14 @@ category_names = [category.text for category in categories]  # Store category na
 #                   'Interior', 'Media', 'Office', 'Other', 'Pets', 'Professional Services', 'Religious', 'Repair',
 #                   'Shopping', 'Short Codes', 'Sport', 'Telecommunication', 'Transport', 'Travel', 'Vehicle', 'Weddings']
 
-category_names = ['Advertising', 'Agriculture']
+category_names = ['Advertising', 'Agriculture', 'Baby Goods', 'Banking', 'Beauty Culture', 'Computers', 'Constructions',
+                  'Education', 'Electrical', 'Embassies', 'Emergency', 'Entertainment', 'Essential Services']
 
 sub_categories = []
-names = []
 previous_href = ""
 data = {}
 for category_name in category_names:
+    names = []
     print(category_name + "\n")
     try:
         # Navigate to the category page
@@ -47,7 +48,6 @@ for category_name in category_names:
         links = driver.find_elements(By.TAG_NAME, "a")
         link_urls = [link.get_attribute("href") for link in links if link.get_attribute("href")]
 
-        # Exclude unnecessary links using below link list
         bad_links = ["https://rainbowpages.lk/", "https://rainbowpages.lk/merchant/login.php",
                      "https://rainbowpages.lk/merchant/register.php", "https://rainbowpages.lk/",
                      "https://rainbowpages.lk/about.php",
@@ -77,6 +77,8 @@ for category_name in category_names:
                      'https://www.facebook.com/RainbowPages.lk', 'https://twitter.com/rainbowpageslk',
                      'https://www.linkedin.com/company/rainbowpages', 'https://www.youtube.com/c/SLTRainbowpageslk',
                      'https://www.instagram.com/sltrainbowpages/', 'http://www.slt.lk/', 'http://beyondm.net/']
+
+        # Exclude unnecessary links using above bad_links array
         for k in bad_links:
             while (k in link_urls):
                 link_urls.remove(k)
@@ -87,31 +89,30 @@ for category_name in category_names:
                 print(link + " : " + category_name)
                 driver.get(link)  # Navigate to the link
                 time.sleep(3)  # Allow some time for the page to load
-                # driver.back()  # Go back to the previous page
+                # Wait for the links to load
                 WebDriverWait(driver, 10).until(
                     EC.presence_of_all_elements_located((By.TAG_NAME, "a"))
                 )
             except Exception as e:
                 print(f"Error visiting {link}: {e}")
 
-            # name_list = driver.find_elements(By.CLASS_NAME, "media-heading")
-            # name_list_text = [name.text for name in name_list]
-            # names.append(name_list_text)
-
             # Go through all pages
-            while (len(driver.find_elements(By.CLASS_NAME, "media-heading")) > 0):
+            while (len(driver.find_elements(By.CLASS_NAME, "media-heading")) > 0):  # Check whether there is any names
                 name_list = driver.find_elements(By.CLASS_NAME, "media-heading")
                 name_list_text = [name.text for name in name_list]
                 names.append(name_list_text)
                 try:
-                    # Wait for the link to be present
+                    # Wait for the next button link to be present
                     next_button = WebDriverWait(driver, 10).until(
                         EC.presence_of_element_located((By.XPATH, '//a[@aria-label="Next"]'))
                     )
-                    # Get the href attribute
+                    # Get the next button attribute
                     href_value = next_button.get_attribute("href")
+
+                    # If the next button link equals to the previous next button link then break the loop
                     if href_value == previous_href:
                         break
+                    # If the next button link not equals to the previous next button link plus # then click the next button
                     elif href_value != previous_href + "#":
                         next_button.click()
                         previous_href = href_value
@@ -132,7 +133,7 @@ for category_name in category_names:
 
     print(names)
 
-    # Creating dataset
+    # Creating dictionary
     column_names = []
     for name in names:
         for n in name:
@@ -140,7 +141,11 @@ for category_name in category_names:
     data[f'{category_name}'] = column_names
 
 time.sleep(3)
-data = dict([ (k,pd.Series(v)) for k,v in data.items() ]) # solution for different size columns https://plainenglish.io/blog/a-quick-trick-to-make-dataframes-with-uneven-array-lengths-32bf80d8a61d
+
+# Creating dataset and saving
+data = dict([(k, pd.Series(v)) for k, v in
+             data.items()])  # solution for different size columns https://plainenglish.io/blog/a-quick-trick-to-make-dataframes-with-uneven-array-lengths-32bf80d8a61d
 df = pd.DataFrame(data)
 df.to_csv("../Datasets/scraper_01/first_two_categories.csv", index=False, header=True)
+
 driver.quit()
