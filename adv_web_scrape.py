@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 import time
+import re
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -9,7 +10,8 @@ from selenium.webdriver.support.wait import WebDriverWait
 service = Service(executable_path="./chromedriver-win64/chromedriver.exe")
 driver = webdriver.Chrome(service=service)
 
-driver.get("https://rainbowpages.lk/")
+url = "https://rainbowpages.lk"
+driver.get(url)
 
 WebDriverWait(driver, 10).until(
     EC.presence_of_element_located((By.CLASS_NAME, "category-item"))
@@ -18,15 +20,101 @@ WebDriverWait(driver, 10).until(
 categories = driver.find_elements(By.CLASS_NAME, "category-item")
 category_names = [category.text for category in categories]  # Store category names separately
 
+category_names = ['Advertising', 'Agriculture', 'Baby Goods', 'Banking', 'Beauty Culture', 'Computers', 'Constructions',
+                  'Education', 'Electrical', 'Embassies', 'Emergency', 'Entertainment', 'Essential Services',
+                  'Financing', 'Food', 'Government', 'Hardware', 'Health', 'Home', 'Hotels', 'Industrial', 'Insurance',
+                  'Interior', 'Media', 'Office', 'Other', 'Pets', 'Professional Services', 'Religious', 'Repair',
+                  'Shopping', 'Short Codes', 'Sport', 'Telecommunication', 'Transport', 'Travel', 'Vehicle', 'Weddings']
+
 sub_categories = []
+names = []
+previous_href = ""
+data = {}
 for category_name in category_names:
+    print(category_name + "\n")
     try:
         # Navigate to the category page
         driver.get(f"https://rainbowpages.lk/{category_name}")
-        sub_cats = driver.find_elements(By.CLASS_NAME, "category-title")
-        sub_cats_links = driver.find_elements(By.TAG_NAME, "a")
-        sub_category_names = [sub_cats_link.text for sub_cats_link in sub_cats_links]  # Store sub category names separately
-        sub_categories.append(sub_category_names)
+        # Wait for the links to load
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.TAG_NAME, "a"))
+        )
+
+        # Extract all links
+        links = driver.find_elements(By.TAG_NAME, "a")
+        link_urls = [link.get_attribute("href") for link in links if link.get_attribute("href")]
+
+        bad_links = ["https://rainbowpages.lk/", "https://rainbowpages.lk/merchant/login.php",
+                     "https://rainbowpages.lk/merchant/register.php", "https://rainbowpages.lk/",
+                     "https://rainbowpages.lk/about.php",
+                     "https://rainbowpages.lk/products.php", "https://rainbowpages.lk/advertise.php",
+                     "https://rainbowpages.lk/news.php", "https://rainbowpages.lk/contact-us.php",
+                     "https://rainbowpages.lk/personal-names.php", "https://rainbowpages.lk/advertising/",
+                     'https://rainbowpages.lk/agriculture/', 'https://rainbowpages.lk/baby-goods/',
+                     'https://rainbowpages.lk/banking/', 'https://rainbowpages.lk/beauty-culture/',
+                     'https://rainbowpages.lk/computers/', 'https://rainbowpages.lk/constructions/',
+                     'https://rainbowpages.lk/education/', 'https://rainbowpages.lk/electrical/',
+                     'https://rainbowpages.lk/embassies/', 'https://rainbowpages.lk/emergency/',
+                     'https://rainbowpages.lk/entertainment/', 'https://rainbowpages.lk/essential-services/',
+                     'https://rainbowpages.lk/financing/', 'https://rainbowpages.lk/food/',
+                     'https://rainbowpages.lk/government/', 'https://rainbowpages.lk/hardware/',
+                     'https://rainbowpages.lk/health/', 'https://rainbowpages.lk/home/',
+                     'https://rainbowpages.lk/hotels/', 'https://rainbowpages.lk/industrial/',
+                     'https://rainbowpages.lk/insurance/', 'https://rainbowpages.lk/interior/',
+                     'https://rainbowpages.lk/media/', 'https://rainbowpages.lk/office/',
+                     'https://rainbowpages.lk/other/', 'https://rainbowpages.lk/pets/',
+                     'https://rainbowpages.lk/professional-services/', 'https://rainbowpages.lk/religious/',
+                     'https://rainbowpages.lk/repair/', 'https://rainbowpages.lk/shopping/',
+                     'https://rainbowpages.lk/short-codes/', 'https://rainbowpages.lk/sport/',
+                     'https://rainbowpages.lk/telecommunication/', 'https://rainbowpages.lk/transport/',
+                     'https://rainbowpages.lk/travel/', 'https://rainbowpages.lk/vehicle/',
+                     'https://rainbowpages.lk/weddings/', 'https://rainbowpages.lk/privacy-policy-mobile.php',
+                     'http://www.weddingdirectory.lk/', 'http://www.touristdirectory.lk/',
+                     'https://www.facebook.com/RainbowPages.lk', 'https://twitter.com/rainbowpageslk',
+                     'https://www.linkedin.com/company/rainbowpages', 'https://www.youtube.com/c/SLTRainbowpageslk',
+                     'https://www.instagram.com/sltrainbowpages/', 'http://www.slt.lk/', 'http://beyondm.net/']
+        for k in bad_links:
+            while (k in link_urls):
+                link_urls.remove(k)
+
+        # Visit each link
+        for link in link_urls:
+            try:
+                print(link + " : " + category_name)
+                driver.get(link)  # Navigate to the link
+                time.sleep(3)  # Allow some time for the page to load
+                # driver.back()  # Go back to the previous page
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_all_elements_located((By.TAG_NAME, "a"))
+                )
+            except Exception as e:
+                print(f"Error visiting {link}: {e}")
+
+            # name_list = driver.find_elements(By.CLASS_NAME, "media-heading")
+            # name_list_text = [name.text for name in name_list]
+            # names.append(name_list_text)
+
+            while (len(driver.find_elements(By.CLASS_NAME, "media-heading")) > 0):
+                name_list = driver.find_elements(By.CLASS_NAME, "media-heading")
+                name_list_text = [name.text for name in name_list]
+                names.append(name_list_text)
+                try:
+                    # Wait for the link to be present
+                    next_button = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, '//a[@aria-label="Next"]'))
+                    )
+                    # Get the href attribute
+                    href_value = next_button.get_attribute("href")
+                    if href_value == previous_href:
+                        break
+                    elif href_value != previous_href + "#":
+                        next_button.click()
+                        previous_href = href_value
+                    else:
+                        break
+                    print(f"The href value is: {href_value}")
+                except Exception as e:
+                    print(f"Error retrieving href: {e}")
         # Go back to the main page
         driver.back()
         WebDriverWait(driver, 10).until(
@@ -34,8 +122,12 @@ for category_name in category_names:
         )
     except Exception as e:
         print(f"Error navigating to {category_name}: {e}")
+    print(names)
+    column_names = []
+    for name in names:
+        for n in name:
+            column_names.append(n)
+    data[f'{category_name}'] = column_names
 
 time.sleep(3)
 driver.quit()
-
-print(sub_categories)
