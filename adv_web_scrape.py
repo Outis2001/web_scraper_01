@@ -1,11 +1,11 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-import time
-import re
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+
+import time
+import pandas as pd
 
 service = Service(executable_path="./chromedriver-win64/chromedriver.exe")
 driver = webdriver.Chrome(service=service)
@@ -20,11 +20,14 @@ WebDriverWait(driver, 10).until(
 categories = driver.find_elements(By.CLASS_NAME, "category-item")
 category_names = [category.text for category in categories]  # Store category names separately
 
-category_names = ['Advertising', 'Agriculture', 'Baby Goods', 'Banking', 'Beauty Culture', 'Computers', 'Constructions',
-                  'Education', 'Electrical', 'Embassies', 'Emergency', 'Entertainment', 'Essential Services',
-                  'Financing', 'Food', 'Government', 'Hardware', 'Health', 'Home', 'Hotels', 'Industrial', 'Insurance',
-                  'Interior', 'Media', 'Office', 'Other', 'Pets', 'Professional Services', 'Religious', 'Repair',
-                  'Shopping', 'Short Codes', 'Sport', 'Telecommunication', 'Transport', 'Travel', 'Vehicle', 'Weddings']
+# from below list you can choose from what categories you want names
+# category_names = ['Advertising', 'Agriculture', 'Baby Goods', 'Banking', 'Beauty Culture', 'Computers', 'Constructions',
+#                   'Education', 'Electrical', 'Embassies', 'Emergency', 'Entertainment', 'Essential Services',
+#                   'Financing', 'Food', 'Government', 'Hardware', 'Health', 'Home', 'Hotels', 'Industrial', 'Insurance',
+#                   'Interior', 'Media', 'Office', 'Other', 'Pets', 'Professional Services', 'Religious', 'Repair',
+#                   'Shopping', 'Short Codes', 'Sport', 'Telecommunication', 'Transport', 'Travel', 'Vehicle', 'Weddings']
+
+category_names = ['Advertising', 'Agriculture']
 
 sub_categories = []
 names = []
@@ -44,6 +47,7 @@ for category_name in category_names:
         links = driver.find_elements(By.TAG_NAME, "a")
         link_urls = [link.get_attribute("href") for link in links if link.get_attribute("href")]
 
+        # Exclude unnecessary links using below link list
         bad_links = ["https://rainbowpages.lk/", "https://rainbowpages.lk/merchant/login.php",
                      "https://rainbowpages.lk/merchant/register.php", "https://rainbowpages.lk/",
                      "https://rainbowpages.lk/about.php",
@@ -94,6 +98,7 @@ for category_name in category_names:
             # name_list_text = [name.text for name in name_list]
             # names.append(name_list_text)
 
+            # Go through all pages
             while (len(driver.find_elements(By.CLASS_NAME, "media-heading")) > 0):
                 name_list = driver.find_elements(By.CLASS_NAME, "media-heading")
                 name_list_text = [name.text for name in name_list]
@@ -115,14 +120,19 @@ for category_name in category_names:
                     print(f"The href value is: {href_value}")
                 except Exception as e:
                     print(f"Error retrieving href: {e}")
+
         # Go back to the main page
         driver.back()
         WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "category-item"))
         )
+
     except Exception as e:
         print(f"Error navigating to {category_name}: {e}")
+
     print(names)
+
+    # Creating dataset
     column_names = []
     for name in names:
         for n in name:
@@ -130,4 +140,6 @@ for category_name in category_names:
     data[f'{category_name}'] = column_names
 
 time.sleep(3)
+df = pd.DataFrame(data)
+df.to_csv("../Datasets/scraper_01/first_two_categories.csv", index=False, header=True)
 driver.quit()
