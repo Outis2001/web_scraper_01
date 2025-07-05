@@ -27,8 +27,7 @@ category_names = [category.text for category in categories]  # Store category na
 #                   'Interior', 'Media', 'Office', 'Other', 'Pets', 'Professional Services', 'Religious', 'Repair',
 #                   'Shopping', 'Short Codes', 'Sport', 'Telecommunication', 'Transport', 'Travel', 'Vehicle', 'Weddings']
 
-category_names = ['Advertising', 'Agriculture', 'Baby Goods', 'Banking', 'Beauty Culture', 'Computers', 'Constructions',
-                  'Education', 'Electrical', 'Embassies', 'Emergency', 'Entertainment', 'Essential Services']
+category_names = ['Advertising']
 
 sub_categories = []
 previous_href = ""
@@ -146,6 +145,6 @@ time.sleep(3)
 data = dict([(k, pd.Series(v)) for k, v in
              data.items()])  # solution for different size columns https://plainenglish.io/blog/a-quick-trick-to-make-dataframes-with-uneven-array-lengths-32bf80d8a61d
 df = pd.DataFrame(data)
-df.to_csv("../Datasets/scraper_01/first_two_categories.csv", index=False, header=True)
+df.to_csv("../Datasets/scraper_01/test.csv", index=False, header=True)
 
 driver.quit()
